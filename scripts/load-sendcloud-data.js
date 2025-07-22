@@ -325,9 +325,16 @@ class SendCloudDataLoader {
         
         const callScript = new CallScript({
           title: `Script: ${caseStudyTitle}`,
+          type: 'cold-call',
           industry: 'E-commerce',
-          objective: 'presentazione-benefici',
-          script: script,
+          structure: {
+            opener: this.extractOpener(script),
+            hook: this.extractHook(script, caseStudyTitle),
+            valueProposition: this.extractValueProp(script, benefits, metrics),
+            questions: this.generateQuestions(),
+            objectionHandling: [],
+            closing: this.extractClosing(script)
+          },
           tags: ['caso-studio', 'benefici', 'risultati'],
           isActive: true,
           createdBy: 'sendcloud-import',
@@ -426,6 +433,21 @@ class SendCloudDataLoader {
     return titleMatches ? titleMatches[1].trim() : 'Cliente SendCloud';
   }
 
+  extractCaseStudyContent(content) {
+    // Estrai il contenuto principale del caso studio
+    const sections = content.split(/\n{2,}/);
+    const relevantSections = sections.filter(section => 
+      section.length > 100 && 
+      (section.includes('risultati') || 
+       section.includes('migliorato') || 
+       section.includes('aumentato') ||
+       section.includes('risparmi') ||
+       section.includes('%'))
+    );
+    
+    return relevantSections.slice(0, 3).join('\n\n').substring(0, 1500);
+  }
+
   extractBenefits(content) {
     const benefits = [];
     const benefitPatterns = [
@@ -512,6 +534,56 @@ class SendCloudDataLoader {
       .replace(/ltd|spa|srl|inc|corp|company/g, '');
     
     return `https://www.${clean}.com`;
+  }
+
+  // Metodi helper per estrarre parti dello script
+  extractOpener(script) {
+    const openerMatch = script.match(/\*\*Apertura:\*\*\n(.*?)(?:\n\*\*|$)/s);
+    return openerMatch ? openerMatch[1].trim() : 'Ciao {{contactName}}, sono {{bdrName}} di SendCloud...';
+  }
+
+  extractHook(script, caseStudyTitle) {
+    const hookMatch = script.match(/\*\*Caso di Successo:\*\*\n(.*?)(?:\n\*\*|$)/s);
+    return hookMatch ? hookMatch[1].trim() : `Abbiamo aiutato ${caseStudyTitle} a ottenere risultati straordinari con le spedizioni.`;
+  }
+
+  extractValueProp(script, benefits, metrics) {
+    let valueProp = 'SendCloud è la piattaforma #1 in Europa per le spedizioni e-commerce. ';
+    
+    if (benefits.length > 0) {
+      valueProp += `I nostri clienti ottengono: ${benefits.slice(0, 2).join(', ')}.`;
+    }
+    
+    if (metrics.length > 0) {
+      valueProp += ` Risultati misurabili: ${metrics.slice(0, 2).join(', ')}.`;
+    }
+    
+    return valueProp;
+  }
+
+  extractClosing(script) {
+    const closingMatch = script.match(/\*\*Proposta:\*\*\n(.*?)$/s);
+    return closingMatch ? closingMatch[1].trim() : 'Possiamo organizzare una demo di 15 minuti per mostrarti come SendCloud può aiutare {{companyName}}?';
+  }
+
+  generateQuestions() {
+    return [
+      {
+        question: 'Attualmente quante spedizioni gestite al mese?',
+        purpose: 'qualificazione-volume',
+        followUp: 'Quali sono le vostre principali destinazioni?'
+      },
+      {
+        question: 'Quali sono i maggiori problemi che riscontrate con le spedizioni attuali?',
+        purpose: 'identificazione-pain-points',
+        followUp: 'Come impatta questo sulla soddisfazione dei clienti?'
+      },
+      {
+        question: 'Avete mai valutato di automatizzare il processo di spedizione?',
+        purpose: 'interesse-automazione',
+        followUp: 'Cosa vi ha fermato finora?'
+      }
+    ];
   }
 
   printStats() {
