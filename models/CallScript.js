@@ -91,7 +91,11 @@ const callScriptSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'KnowledgeBase'
   }],
-  notes: String
+  notes: String,
+  source: {
+    type: String,
+    trim: true
+  }
 }, {
   timestamps: true
 });

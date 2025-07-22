@@ -47,6 +47,10 @@ const knowledgeBaseSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  source: {
+    type: String,
+    trim: true
+  },
   // Informazioni specifiche per le tariffe
   carrierInfo: {
     name: String,

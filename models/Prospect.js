@@ -104,7 +104,11 @@ const prospectSchema = new mongoose.Schema({
     default: true
   },
   lastContactDate: Date,
-  nextFollowUp: Date
+  nextFollowUp: Date,
+  source: {
+    type: String,
+    trim: true
+  }
 }, {
   timestamps: true
 });
