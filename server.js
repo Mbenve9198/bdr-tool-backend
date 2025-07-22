@@ -44,6 +44,7 @@ app.use('/api/scripts', require('./routes/scripts'));
 app.use('/api/templates', require('./routes/templates'));
 app.use('/api/rates', require('./routes/rates'));
 app.use('/api/ai', require('./routes/ai'));
+app.use('/api/similarweb', require('./routes/similarweb'));
 
 // Route di test
 app.get('/api/health', (req, res) => {
