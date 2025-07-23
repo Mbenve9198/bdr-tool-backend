@@ -1,4 +1,5 @@
 const axios = require('axios');
+const Prospect = require('../models/Prospect');
 
 class SimilarWebController {
   
@@ -65,9 +66,19 @@ class SimilarWebController {
       console.log(`✅ [SimilarWeb] Analisi completata per: ${domain}`);
       console.log(`📊 [SimilarWeb] Visite mensili: ${processedData.traffic.totalVisits?.toLocaleString() || 'N/A'}`);
 
+      // Salva o aggiorna i dati nel database
+      const savedProspect = await this.saveProspectData(domain, websiteUrl, processedData, siteData);
+      console.log(`💾 [SimilarWeb] Prospect salvato con ID: ${savedProspect._id}`);
+
       res.json({
         success: true,
-        data: processedData
+        data: processedData,
+        prospectId: savedProspect._id,
+        prospectData: {
+          companyName: savedProspect.companyName,
+          website: savedProspect.website,
+          estimatedBusiness: savedProspect.businessInfo
+        }
       });
 
     } catch (error) {
@@ -250,6 +261,122 @@ class SimilarWebController {
     }
 
     return insights;
+  }
+
+  // Salva o aggiorna i dati del prospect nel database
+  async saveProspectData(domain, websiteUrl, processedData, rawSimilarWebData) {
+    try {
+      // Cerca prospect esistente per dominio
+      let prospect = await Prospect.findOne({ website: websiteUrl });
+
+      // Calcola stime business basate su dati SimilarWeb
+      const monthlyVisits = processedData.traffic.totalVisits || 0;
+      const conversionRate = 2.0; // 2% medio e-commerce Italia
+      const averageOrderValue = 75; // €75 AOV medio
+      const monthlyOrders = Math.round(monthlyVisits * (conversionRate / 100));
+      const monthlyShipments = Math.round(monthlyOrders * 1.05); // +5% multi-item
+
+      const businessEstimates = {
+        monthlyShipments: monthlyShipments,
+        averageOrderValue: averageOrderValue,
+        currentShippingCosts: Math.round(monthlyShipments * 3.5), // €3.50 medio spedizione
+        mainDestinations: processedData.geography.topCountries?.slice(0, 3).map(c => c.countryName) || [],
+        estimatedMonthlyRevenue: monthlyOrders * averageOrderValue,
+        conversionRate: conversionRate,
+        monthlyOrders: monthlyOrders
+      };
+
+      if (prospect) {
+        // Aggiorna prospect esistente
+        console.log(`📝 [SimilarWeb] Aggiornando prospect esistente: ${prospect.companyName}`);
+        
+        prospect.websiteAnalysis = {
+          isEcommerce: true,
+          platform: 'Unknown', // Potremmo detectarlo in futuro
+          analysisDate: new Date(),
+          analysisData: {
+            similarweb: {
+              processed: processedData,
+              raw: rawSimilarWebData,
+              analyzedAt: new Date()
+            }
+          }
+        };
+
+        // Aggiorna stime business
+        prospect.businessInfo = {
+          ...prospect.businessInfo?.toObject?.() || {},
+          ...businessEstimates
+        };
+
+        // Aggiungi interazione di analisi
+        prospect.interactions.push({
+          type: 'follow-up',
+          date: new Date(),
+          notes: `Analisi SimilarWeb automatica: ${monthlyVisits.toLocaleString()} visite/mese, ${monthlyShipments} spedizioni stimate`,
+          outcome: 'positive',
+          nextAction: 'Preparare proposta commerciale basata su dati traffico',
+          bdrName: 'Sistema Automatico'
+        });
+
+        await prospect.save();
+        return prospect;
+
+      } else {
+        // Crea nuovo prospect
+        console.log(`🆕 [SimilarWeb] Creando nuovo prospect per: ${domain}`);
+        
+        const newProspect = new Prospect({
+          companyName: processedData.basic.siteName || domain,
+          website: websiteUrl,
+          industry: 'E-commerce', // Default basato su SimilarWeb
+          size: this.estimateCompanySize(monthlyVisits),
+          
+          businessInfo: businessEstimates,
+          
+          websiteAnalysis: {
+            isEcommerce: true,
+            platform: 'Unknown',
+            analysisDate: new Date(),
+            analysisData: {
+              similarweb: {
+                processed: processedData,
+                raw: rawSimilarWebData,
+                analyzedAt: new Date()
+              }
+            }
+          },
+
+          interactions: [{
+            type: 'follow-up',
+            date: new Date(),
+            notes: `Prima analisi SimilarWeb: ${monthlyVisits.toLocaleString()} visite/mese, potenziale ${monthlyShipments} spedizioni`,
+            outcome: 'positive',
+            nextAction: 'Contattare per demo SendCloud',
+            bdrName: 'Sistema Automatico'
+          }],
+
+          status: 'nuovo'
+        });
+
+        const savedProspect = await newProspect.save();
+        return savedProspect;
+      }
+
+    } catch (error) {
+      console.error('❌ [SimilarWeb] Errore salvataggio prospect:', error);
+      // Non interrompere il flusso se il salvataggio fallisce
+      return { _id: 'error', companyName: domain, website: websiteUrl, businessInfo: {} };
+    }
+  }
+
+  // Stima dimensione azienda basata su traffico
+  estimateCompanySize(monthlyVisits) {
+    if (monthlyVisits > 500000) return 'enterprise';
+    if (monthlyVisits > 100000) return 'grande';
+    if (monthlyVisits > 10000) return 'media';
+    if (monthlyVisits > 1000) return 'piccola';
+    return 'startup';
   }
 }
 
