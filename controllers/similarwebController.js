@@ -7,9 +7,18 @@ class SimilarWebController {
     try {
       const { websiteUrl } = req.body;
       
-      // Estrae il dominio dall'URL
+      // Estrae e pulisce il dominio dall'URL
       const url = new URL(websiteUrl);
-      const domain = url.hostname.replace('www.', '');
+      let domain = url.hostname.replace('www.', '');
+      
+      // Validazione dominio
+      if (!domain || domain.length < 3 || !domain.includes('.')) {
+        console.error(`❌ [SimilarWeb] Dominio non valido: ${domain}`);
+        return res.status(400).json({
+          success: false,
+          error: `Dominio non valido: ${domain}. Inserisci un URL completo (es. https://example.com)`
+        });
+      }
 
       console.log(`🔍 [SimilarWeb] Analizzando traffico per: ${domain}`);
 
@@ -64,9 +73,20 @@ class SimilarWebController {
       
       if (error.response) {
         const status = error.response.status;
+        const responseData = error.response.data;
+        
+        // Log dettagliato per debug
+        console.error(`🔍 [SimilarWeb] Status: ${status}`);
+        console.error(`🔍 [SimilarWeb] Response:`, responseData);
+        
         let errorMessage = 'Errore API SimilarWeb';
         
         switch (status) {
+          case 400:
+            console.error(`🔍 [SimilarWeb] Richiesta malformata per dominio: ${domain}`);
+            console.error(`🔍 [SimilarWeb] Payload inviato:`, { urls: [domain], maxItems: 1 });
+            errorMessage = `Richiesta non valida per ${domain}. Verifica che il dominio sia corretto e supportato da SimilarWeb.`;
+            break;
           case 401:
             errorMessage = 'Token Apify non valido o scaduto';
             break;
@@ -80,7 +100,7 @@ class SimilarWebController {
             errorMessage = 'Errore interno API Apify';
             break;
           default:
-            errorMessage = `Errore API SimilarWeb (${status}): ${error.response.data?.error || error.response.statusText}`;
+            errorMessage = `Errore API SimilarWeb (${status}): ${responseData?.error || error.response.statusText}`;
         }
         
         return res.status(status).json({
