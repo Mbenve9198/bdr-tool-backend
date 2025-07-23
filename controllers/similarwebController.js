@@ -4,12 +4,14 @@ class SimilarWebController {
   
   // Analizza traffico sito web tramite Apify SimilarWeb
   async analyzeSiteTraffic(req, res) {
+    let domain = ''; // Dichiara domain nel scope della funzione
+    
     try {
       const { websiteUrl } = req.body;
       
       // Estrae e pulisce il dominio dall'URL
       const url = new URL(websiteUrl);
-      let domain = url.hostname.replace('www.', '');
+      domain = url.hostname.replace('www.', '');
       
       // Validazione dominio
       if (!domain || domain.length < 3 || !domain.includes('.')) {
@@ -35,7 +37,7 @@ class SimilarWebController {
       const response = await axios.post(
         'https://api.apify.com/v2/acts/tri_angle~fast-similarweb-scraper/run-sync-get-dataset-items',
         {
-          urls: [domain],
+          websites: [domain],
           maxItems: 1
         },
         {
@@ -84,8 +86,8 @@ class SimilarWebController {
         switch (status) {
           case 400:
             console.error(`🔍 [SimilarWeb] Richiesta malformata per dominio: ${domain}`);
-            console.error(`🔍 [SimilarWeb] Payload inviato:`, { urls: [domain], maxItems: 1 });
-            errorMessage = `Il dominio "${domain}" non è supportato da SimilarWeb o non ha dati di traffico sufficienti. SimilarWeb supporta principalmente siti web con traffico significativo. Prova con un dominio più grande o verifica che l'URL sia corretto.`;
+            console.error(`🔍 [SimilarWeb] Payload inviato:`, { websites: [domain], maxItems: 1 });
+            errorMessage = `Errore nella richiesta per il dominio "${domain}". Verifica che l'URL sia corretto e nel formato giusto.`;
             break;
           case 401:
             errorMessage = 'Token Apify non valido o scaduto';
