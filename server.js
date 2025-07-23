@@ -38,7 +38,6 @@ mongoose.connect(process.env.MONGODB_URI, {
 .catch(err => console.error('❌ Errore connessione MongoDB:', err));
 
 // Routes
-app.use('/api/knowledge-base', require('./routes/knowledgeBase'));
 app.use('/api/prospects', require('./routes/prospects'));
 app.use('/api/scripts', require('./routes/scripts'));
 app.use('/api/templates', require('./routes/templates'));
