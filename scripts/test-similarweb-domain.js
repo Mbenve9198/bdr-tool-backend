@@ -11,12 +11,12 @@ async function testSimilarWebDomain(domain = 'amazon.com') {
 
   try {
     console.log(`🔍 Inviando richiesta ad Apify...`);
-    console.log(`📋 Payload:`, { urls: [domain], maxItems: 1 });
+    console.log(`📋 Payload:`, { websites: [domain], maxItems: 1 });
 
     const response = await axios.post(
       'https://api.apify.com/v2/acts/tri_angle~fast-similarweb-scraper/run-sync-get-dataset-items',
       {
-        urls: [domain],
+        websites: [domain],
         maxItems: 1
       },
       {
@@ -54,9 +54,9 @@ async function testSimilarWebDomain(domain = 'amazon.com') {
     // Suggerimenti per errori comuni
     if (error.response?.status === 400) {
       console.log(`\n💡 Suggerimenti per errore 400:`);
+      console.log(`   - Verifica il parametro websites (non urls) nel payload`);
       console.log(`   - Verifica che il dominio sia corretto: ${domain}`);
       console.log(`   - Prova con domini popolari: amazon.com, google.com`);
-      console.log(`   - Alcuni domini potrebbero non essere supportati da SimilarWeb`);
     } else if (error.response?.status === 401) {
       console.log(`\n💡 Token non valido. Verifica APIFY_TOKEN in .env`);
     } else if (error.response?.status === 402) {
