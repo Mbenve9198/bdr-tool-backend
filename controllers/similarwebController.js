@@ -85,7 +85,7 @@ class SimilarWebController {
           case 400:
             console.error(`🔍 [SimilarWeb] Richiesta malformata per dominio: ${domain}`);
             console.error(`🔍 [SimilarWeb] Payload inviato:`, { urls: [domain], maxItems: 1 });
-            errorMessage = `Richiesta non valida per ${domain}. Verifica che il dominio sia corretto e supportato da SimilarWeb.`;
+            errorMessage = `Il dominio "${domain}" non è supportato da SimilarWeb o non ha dati di traffico sufficienti. SimilarWeb supporta principalmente siti web con traffico significativo. Prova con un dominio più grande o verifica che l'URL sia corretto.`;
             break;
           case 401:
             errorMessage = 'Token Apify non valido o scaduto';
