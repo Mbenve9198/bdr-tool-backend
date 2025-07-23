@@ -48,7 +48,12 @@ const prospectSchema = new mongoose.Schema({
     mainDestinations: [String],
     currentCarriers: [String],
     painPoints: [String],
-    priorities: [String]
+    priorities: [String],
+    // Campi aggiunti per analisi SimilarWeb
+    estimatedMonthlyRevenue: Number,
+    conversionRate: Number,
+    monthlyOrders: Number,
+    estimatedMonthlyVisits: Number
   },
   // Analisi automatica del sito web
   websiteAnalysis: {

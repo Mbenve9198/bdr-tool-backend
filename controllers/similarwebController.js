@@ -283,7 +283,8 @@ class SimilarWebController {
         mainDestinations: processedData.geography.topCountries?.slice(0, 3).map(c => c.countryName) || [],
         estimatedMonthlyRevenue: monthlyOrders * averageOrderValue,
         conversionRate: conversionRate,
-        monthlyOrders: monthlyOrders
+        monthlyOrders: monthlyOrders,
+        estimatedMonthlyVisits: monthlyVisits
       };
 
       if (prospect) {
