@@ -12,7 +12,10 @@ const app = express();
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.com'] 
+    ? [
+        'https://bdr-tool-frontend.vercel.app',
+        'https://sendcloud-bdr-frontend.vercel.app'
+      ]
     : ['http://localhost:3000'],
   credentials: true
 }));
